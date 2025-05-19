@@ -5,7 +5,9 @@
 [![Automation Level](https://img.shields.io/badge/automation-100%25-success)](https://webdriver.io/)
 [![Made with ❤️](https://img.shields.io/badge/made%20with-%E2%9D%A4-red)](#)
 
-Automatically generate **WebdriverIO Page Object classes, AI/NLP-Driven Selector Name Inference** and **Mocha test specs** from Gherkin `.feature` files — reducing manual effort, improving consistency, and speeding up QA automation 🚀. It works in two main steps:
+Automatically generate WebdriverIO Page Object classes, utilize AI/NLP for Selector Name Inference, and generate Mocha test specifications from Gherkin .feature files, minimizing manual effort, enhancing consistency, enforcing design patterns, and accelerating QA automation.
+
+🚀. It works in two main steps:
 
 1. Generate Step Maps: Parses Gherkin feature files to produce structured .stepMap.json files which contains - `action`, `selectorName`, `selector`, `fallbackSelector`, `note`.
 
@@ -18,10 +20,10 @@ Automatically generate **WebdriverIO Page Object classes, AI/NLP-Driven Selector
 ```
 project-root/
 ├── features/               # Input Gherkin feature files
-├── stepMaps/               # Auto-generatedstep stepMap.json (intermediate)
+├── stepMaps/               # Auto-generated stepMap.json (intermediate)
 ├── test/
-│   ├── pageobjects/        # Generated Page Object classes
-│   └── specs/              # Generated Mocha/WebdriverIO test specs 
+│   ├── pageobjects/        # Auto-generated Page Object classes
+│   └── specs/              # Auto-generated Mocha/WebdriverIO test specs 
 ├── selector-aliases.json   # Optional user-defined selector overrides
 ├── generateStepMap.ts      # StepMap generator script, Step 1: Feature → stepMap.json 
 ├── generateTestsFromMap.ts # PageObject + test spec generator script, Step 2: stepMap.json → WebdriverIO tests
@@ -52,7 +54,7 @@ project-root/
   - e.g., `username` → `userNameField`
   - `login` → `loginButton`
 
-- Logical names are mapped to **standard fallback selectors**:
+- Logical names are mapped to selector:
   ```json
   {
     "selector": "[data-testid=\"loginButton\"]",
@@ -70,7 +72,7 @@ project-root/
 }
 ```
 - Priority Order:
-    1. Selector alias (if exists)
+    1. Selector alias (if exists) else takes the regex-based default selector
     2. Fallback selector
 ---
 
@@ -217,12 +219,20 @@ describe('Login', () => {
   - `npm install`
 ---
 
-### 🚀 Usage
+## 🚀 Usage
+
+After installing the necessary package, the next step is to design your features and scenarios utilizing the Gherkin syntax. You may have multiple Gherkin feature files within the features directory, each capable of containing numerous scenarios. Once you have developed the .feature files according to your specifications, please follow the steps outlined below in sequence.
+
+
 Step 1: Generate step map
 - `npm run generate:stepmap`
 
+> Additionally, ensure that you update the relevant selector for the DOM element in your application after generating your JSON file. This will serve as your foundation, and your page objects and test specifications will be constructed based on this data.
+
 Step 2: Generate WebdriverIO Page Object classes and Mocha test specs
 - `npm run generate:tests`
+
+> It is recommended to examine the generated code and implement any required adjustments to meet your needs, such as invoking methods from specifications to the page class, incorporating reusable methods, and managing your test data etc.
 
 Step 3: To execute Mocha test specs 
 - `npm run test:local`

@@ -28,8 +28,6 @@
    "include": [
   "test",
   "wdio.conf.ts",
-  "generateStepMap.ts",
-  "generateTestsFromMap.ts",
-  "generateTestsFromMap-ok.ts"
+  "testgen.ts"
 ]
 }

@@ -1,6 +1,6 @@
 {
-  "_comment": "This will override fallbackSelector for matching selectorName...",
-  "userNameField": "#login-username-amiya",
-  "passwordField": "#login-password",
-  "loginButton": "button.login-btn"
+  "_comment": "This will override primary selector for matching selectorName...",
+  "userNameField": "#login-username-aliases-test",
+  "passwordField": "#login-password-aliases-test",
+  "loginButton": "button.login-btn-aliases-test"
 }

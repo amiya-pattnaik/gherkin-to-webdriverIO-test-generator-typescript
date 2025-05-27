@@ -1,36 +1,297 @@
-# 🤖 Gherkin To WebdriverIO Test Generator With TypeScript
-
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://webdriver.io/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Automation Level](https://img.shields.io/badge/automation-100%25-success)](https://webdriver.io/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.x-green.svg)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Made with ❤️](https://img.shields.io/badge/made%20with-%E2%9D%A4-red)](#)
 
-Automatically generate WebdriverIO Page Object classes, utilize AI/NLP for Selector Name Inference, and generate Mocha test specifications from Gherkin .feature files, minimizing manual effort, enhancing consistency, enforcing design patterns, and accelerating QA automation.
+# 🤖 wdio-testgen-from-gherkin-ts 
 
-🚀. It works in two main steps:
+> CLI tool to generate WebdriverIO Page Objects, utilize AI/NLP for Selector Name, Method Name Inference, and generate Mocha Specs from Gherkin `.feature` files.
+
+> 🚀. It works in two main steps:
 
 1. Generate Step Maps: Parses Gherkin feature files to produce structured .stepMap.json files which contains - `action`, `selectorName`, `selector`, `fallbackSelector`, `note`.
 
 2. Generate Tests: Uses the .stepMap.json to generate:
     - `WebdriverIO-compatible Page Object Model (POM) classes.`
     - `Mocha-based test specs.`
+
 ---
 
-📂 Directory Structure
+## 📦 Installation
+
+Clone the repo and install dependencies:
+
+```bash
+git clone https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts.git
+
+cd wdio-testgen-from-gherkin-ts
+
+npm install
+```
+
+> ✅ If using globally, also install `tsx`:
+```bash
+npm install -g tsx
+```
+
+---
+
+## 🧭 Directory Structure
+
 ```
 project-root/
-├── features/               # Input Gherkin feature files
-├── stepMaps/               # Auto-generated stepMap.json (intermediate)
-├── test/
-│   ├── pageobjects/        # Auto-generated Page Object classes
-│   └── specs/              # Auto-generated Mocha/WebdriverIO test specs 
-├── selector-aliases.json   # Optional user-defined selector overrides
-├── generateStepMap.ts      # StepMap generator script, Step 1: Feature → stepMap.json 
-├── generateTestsFromMap.ts # PageObject + test spec generator script, Step 2: stepMap.json → WebdriverIO tests
-└── README.md
+├── features/                   # Gherkin .feature files (user input / source file)
+├── stepMaps/                   # Auto-generated .stepMap.json files
+├── test/                 
+│   ├── pageobjects/            # Auto-generated WebdriverIO tests Page Object Model classes
+│   └── specs/                  # Auto-generated Mocha test specs
+├── src/
+│   ├── cli.ts                  # Main CLI logic 
+│   ├── generateStepsMap.ts     # Feature-to-stepMap generator
+│   ├── generateTestsFromMap.ts # stepMap-to-page/spec generator
+│   ├── utils.ts                # Helper methods
+│   └── config.ts               # Paths, fallback selectors, aliases
+│   └── __tests__/              # Unit tests (Vitest)
+├── testgen.ts                  # CLI entry point
+│── tsconfig.json               # TypeScript configuration
+│── vitest.config.ts            # Vitest unit testing configuration - Optional
+│── wdio.config.ts              # WebdriverIO configuration
+├── package.json                # Scripts and dependencies
+├── selector-aliases.json       # Optional user-defined selector overrides the primary selector
+
 ```
+
 ---
 
+## 🚀 CLI Usage
+
+### Option A: Run with npm scripts (easy local use)
+
+```bash
+# Step 1: Generate stepMap.json from the .feature files
+npm run testgen:steps -- --all                 
+npm run testgen:steps -- --file login.feature
+
+# Step 2: Generate Page Objects and Mocha Specs from stepMap.json
+npm run testgen:tests -- --all
+npm run testgen:tests -- --file login.stepMap.json
+
+# Step 3: Execute tests and generate Allure reoprt
+npm run testgen:run -- --report
+```
+
+### Option B: Use as a global CLI command
+
+#### One-time setup:
+```bash
+chmod +x testgen.ts
+npm link     # If fails, try: sudo npm link
+```
+
+> ✅ Prerequisite: `tsx` must be installed globally
+```bash
+npm install -g tsx
+```
+
+#### Now run from anywhere:
+```bash
+testgen steps --all
+testgen tests --file login.stepMap.json
+testgen run --report        # ⬅️ Runs tests and generate allure report
+testgen run --report-only   # ⬅️ Generate report without rerunning testsbash
+```
+> 💡 **Note for Allure users:** To avoid errors when opening the report viewer, split the `allure:report` script like this in your package.json:
+>
+> ```json
+> "scripts": {
+>   "allure:generate": "node_modules/.bin/allure generate --clean allure-results",
+>   "allure:open": "allure open -p 5050",
+>   "allure:report": "npm run allure:generate && npm run allure:open"
+> }
+> ```
+
+---
+
+## ⚙️ Available Commands & Flags
+
+### `testgen steps`
+| Flag         | Description                              |
+|--------------|------------------------------------------|
+| `--all`      | Parse all feature files                  |
+| `--file`     | Parse specific feature file(s)           |
+| `--watch`    | Watch for changes                        |
+| `--verbose`  | Print detailed logs                      |
+|`--dry-run`   | Show files that would be created         |
+| `--force`    | Overwrite existing stepMap files         |
+
+### `testgen tests`
+| Flag         | Description                              |
+|--------------|------------------------------------------|
+| `--all`      | Generate tests for all step maps         |
+| `--file`     | Generate tests for specific step maps    |
+| `--watch`    | Watch and regenerate on change           |
+| `--verbose`  | Print detailed logs                      |
+| `--dry-run`  | Show files that would be created         |
+| `--force`    | Overwrite existing test files            |
+
+### `testgen run`
+| Flag           | Description                                      |
+|----------------|--------------------------------------------------|
+| `--report`     | Generate Allure report after test run            |
+| `--report-only`| Generate only Allure report (skip running tests) |
+---
+
+## 📁 Minimal Example
+
+### `features/login.feature`
+```gherkin
+Feature: Login
+  Scenario: Successful login
+    Given I open the login page
+    When I enter "admin" into the username field
+    And I enter "adminpass" into the password field
+    And I click the login button
+    Then I should see the dashboard
+```
+
+### Generated: `stepMaps/login.stepMap.json`
+```json
+{
+  "Successful login": [
+    {
+      "action": "setValue",
+      "selectorName": "userNameField",
+      "selector": "[data-testid=\"userNameField\"]",
+      "fallbackSelector": "#username, input[name=\"username\"]",
+      "note": "admin"
+    },
+    {
+      "action": "setValue",
+      "selectorName": "passwordField",
+      "selector": "[data-testid=\"passwordField\"]",
+      "fallbackSelector": "#password, input[type=\"password\"]",
+      "note": "adminpass"
+    },
+    {
+      "action": "click",
+      "selectorName": "loginButton",
+      "selector": "[data-testid=\"loginButton\"]",
+      "fallbackSelector": "#login, button[type=\"submit\"]",
+      "note": ""
+    },
+    {
+      "action": "assertVisible",
+      "selectorName": "dashboard",
+      "selector": "[data-testid=\"dashboard\"]",
+      "fallbackSelector": "",
+      "note": ""
+    }
+  ]
+}
+```
+
+> <span style="color: red;"> Note: Additionally, ensure that you update the relevant selector for the DOM element of your application under test after generating your JSON file. This will serve as your foundation, and your page objects and test spec files will be constructed based on this data.</span>
+
+### Generated: `test/pageobjects/page.ts`
+```ts
+import { browser, $ } from '@wdio/globals';
+
+export default class Page {
+  open(path: string) {
+    return browser.url(`https://the-internet.herokuapp.com/${path}`);
+  }
+
+  async trySelector(primarySelector: string, fallbackSelectors: string[]) {
+    try {
+      const primary = await $(primarySelector);
+      if (await primary.isExisting() && await primary.isDisplayed()) {
+        console.log(`✅ Using primary selector: ${primarySelector}`);
+        return primary;
+      }
+    } catch (e) {
+      console.warn(`⚠️ Failed to find element with primary selector: ${primarySelector}`);
+    }
+    for (const selector of fallbackSelectors) {
+      try {
+        const alt = await $(selector);
+        if (await alt.isExisting() && await alt.isDisplayed()) {
+          console.log(`↪️ Using fallback selector: ${selector}`);
+          return alt;
+        }
+      } catch (e) {}
+    }
+    throw new Error(`❌ All selectors failed:\nPrimary: ${primarySelector}\nFallbacks: ${fallbackSelectors.join(', ')}`);
+  }
+}
+```
+
+### Generated: `test/pageobjects/login.page.ts`
+```ts
+import Page from './page';
+
+class LoginPage extends Page {
+  get userNameField() {
+    return this.trySelector('[data-testid="userNameField"]', ['#username', 'input[name="username"]']);
+  }
+
+  get passwordField() {
+    return this.trySelector('[data-testid="passwordField"]', ['#password', 'input[type="password"]']);
+  }
+
+  get loginButton() {
+    return this.trySelector('[data-testid="loginButton"]', ['#login', 'button[type="submit"]']);
+  }
+
+  get dashboard() {
+    return this.trySelector('[data-testid="dashboard"]', []);
+  }
+
+  async successfulLogin() {
+    await (await this.userNameField).setValue('admin');
+    await (await this.passwordField).setValue('adminpass');
+    await (await this.loginButton).click();
+    await expect(await this.dashboard).toBeDisplayed();
+  }
+
+  open(pathSegment: string = 'login') {
+    return super.open(pathSegment);
+  }
+}
+
+export default new LoginPage();
+```
+
+### Generated: `test/specs/login.spec.ts`
+```ts
+import { expect } from '@wdio/globals';
+import LoginPage from '../pageobjects/login.page';
+
+describe('login feature tests', () => {
+  it('successfulLogin', async () => {
+    await LoginPage.open();
+    await (await LoginPage.userNameField).setValue('admin');
+    await (await LoginPage.passwordField).setValue('adminpass');
+    await (await LoginPage.loginButton).click();
+    await expect(await LoginPage.dashboard).toBeDisplayed();
+
+    // Or simply use:
+    // await LoginPage.successfulLogin();
+  });
+});
+```
+> <span style="color: red;"> Note: It is recommended to examine the generated code and implement any required adjustments to meet your needs, such as invoking methods from specifications to the page class, incorporating reusable methods, renaming selector name, method name (if any) and managing your test data etc.</span>
+
+---
+
+## ✅ Unit Testing (optional)
+
+```bash
+npm run vitest
+```
+> Vitest is used for testing core logic in `src/utils.ts`.
+
+---
 ## ✅ Features Implemented
 
 ### 🔁 1. **Two-Step Test Generation Flow**
@@ -39,32 +300,32 @@ project-root/
 - **Step 2**: Use `stepMap.json` to auto-generate:
   - WebdriverIO Page Object classes.
   - Mocha test spec files.
----
+
 
 ### 🧠 2. **AI/NLP-Driven Selector Name Inference**
 
-- Uses the `compromise` NLP library to generate meaningful selector names based on verbs/nouns in step text.
+- Uses the `compromise` NLP library to generate meaningful selector, method names based on verbs/nouns in step text.
 - Example:  
   `"When user clicks login"` → `selectorName: "clicklogin"`
----
 
-### 🧠 3. **Logical Selector Mapping with Fallbacks**
+### 🧠 3. **Logical Selector Mapping with Fallback Selector**
 
 - Applies regex-based matching to map common UI elements to logical names:
   - e.g., `username` → `userNameField`
   - `login` → `loginButton`
 
-- Logical names are mapped to selector:
+- Logical names are mapped to selector and fallbackSelector:
   ```json
   {
     "selector": "[data-testid=\"loginButton\"]",
     "fallbackSelector": "#login, button[type=\"submit\"]",
   }
----
+  ```
+  > <span style="color: green;">The `fallbackSelector` is a palce holder for containing more than one alternative selector. At the run time if the primary selector (i.e. "selector": "[data-testid=\"loginButton\"]") fails to locate the element, it will log `⚠️ Failed to find element with primary selector`, and then it will pick one of the alternative selctor mentioned in the `fallbackSelector`. If it finds the right selector it will log `↪️ Using fallback selector`. If none of the alternative selector found, then it will trrow error `❌ All selectors failed`.</span>
 
 ### 🔄 4. User-Defined Selector Aliases (Optional)
 
-- Optional file: selector-aliases.json. When implemented it overrides the default selector (primary)
+- Optional file: `selector-aliases.json`. When implemented it overrides the default primary selector ("selector": "#login-username",) of the generated .stepMap.json. If you don't need the selector-aliases.json then rename it or delet it from the root. 
 ```json
 {
   "userNameField": "#login-username",
@@ -74,7 +335,6 @@ project-root/
 - Priority Order:
     1. Selector alias (if exists) else takes the regex-based default selector
     2. Fallback selector
----
 
 ### 🧪 5. Action Inference Engine
 
@@ -114,136 +374,24 @@ Supports a wide range of actions: `setValue`, `click`, `selectDropdown`, `upload
 | assertUrlContains | Checks partial match on URL     |
 | waitForVisible    | Waits until element is visible    |
 
-> Please be advised that any unrecognized actions have been commented out in the generated code for your review. Should you wish to include any additional actions, kindly refer to the source code and incorporate the necessary actions, which is quite straightforward. You may utilize any WebdriverIO commands as needed.
+> <span style="color: green;">Please be advised that any unrecognized actions have been commented out in the generated code for your review. Should you wish to include any additional actions, kindly refer to the source code (src\\) and incorporate the necessary actions, which is quite straightforward. You may utilize any WebdriverIO commands as needed.</span>
+
 ---
 
-### 🧱 6. Generated Page Object Structure
+## 🧰 Troubleshooting
 
- - One method per scenario
- - Clean method naming (camelCase)
- - Clean and aligned with official [WebdriverIO structure](https://webdriver.io/docs/pageobjects/).
+**Error:** `command not found: testgen`  
+✅ Run `npm link` again inside the project root.
 
-🧪 Example:
+**Error:** `env: tsx: No such file or directory`  
+✅ Install `tsx` globally: `npm install -g tsx`
 
-📘 Sample Feature File (features/login.feature)
+**Error:** `ENOENT: no such file or directory, open 'package.json'`  
+✅ You’re running `npm run` outside the project — run from root.
 
-Feature : Login
-```gherkin
-Feature: login
-  Scenario: This is my successful login
-    Given I open the login page
-    When I enter username in the username field
-    When I enter password in the password field
-    And I click on the login button
-    Then I should see "Welcome Tom!" in the welcome message
-```
-
-📦 Generated Step Map (stepMaps/login.stepMap.json)
-
-```JSON
-{
-  "Successful login": [
-    {
-      "action": "setValue",
-      "selectorName": "userNameField",
-      "selector": "[data-testid=\"userNameField\"]",
-      "fallbackSelector": "#username, input[name=\"username\"]",
-      "note": "admin"
-    },
-    {
-      "action": "setValue",
-      "selectorName": "passwordField",
-      "selector": "[data-testid=\"passwordField\"]",
-      "fallbackSelector": "#password, input[type=\"password\"]",
-      "note": "password123"
-    },
-    {
-      "action": "click",
-      "selectorName": "loginButton",
-      "selector": "[data-testid=\"loginButton\"]",
-      "fallbackSelector": "#login, button[type=\"submit\"]",
-      "note": ""
-    },
-    {
-      "action": "assertVisible",
-      "selectorName": "welcomeBanner",
-      "selector": "[data-testid=\"welcomeBanner\"]",
-      "fallbackSelector": "#welcome-message, .welcome",
-      "note": ""
-    }
-  ]
-}
-```
-
-🧱 Generated Page Object (test/pageobjects/login.page.ts)
-
-```ts
-import Page from './page.ts';
-
-class LoginPage extends Page {
-  async successfulLogin() {
-    await this.trySelector('userNameField').setValue("admin");
-    await this.trySelector('passwordField').setValue("password123");
-    await this.trySelector('loginButton').click();
-    await expect(this.trySelector('welcomeBanner')).toBeDisplayed();
-  }
-
-  open() {
-    return super.open('/login');
-  }
-}
-
-export default new LoginPage();
-```
-
-🧪 Generated Spec File (test/specs/login.spec.ts)
-```ts
-import loginPage from '../pageobjects/login.page.ts';
-
-describe('Login', () => {
-  it('Successful login', async () => {
-    await loginPage.open();
-    await loginPage.successfulLogin();
-  });
-});
-
-```
----
-
-### 🛠 Prerequisites
-
- - Node.js
- - TypeScript
-
- Install Required Packages
-  - `npm install`
----
-
-## 🚀 Usage
-
-After installing the necessary package, the next step is to design your features and scenarios utilizing the Gherkin syntax. You may have multiple Gherkin feature files within the features directory, each capable of containing numerous scenarios. Once you have developed the .feature files according to your specifications, please follow the steps outlined below in sequence.
-
-
-Step 1: Generate step map
-- `npm run generate:stepmap`
-
-> Additionally, ensure that you update the relevant selector for the DOM element in your application after generating your JSON file. This will serve as your foundation, and your page objects and test specifications will be constructed based on this data.
-
-Step 2: Generate WebdriverIO Page Object classes and Mocha test specs
-- `npm run generate:tests`
-
-> It is recommended to examine the generated code and implement any required adjustments to meet your needs, such as invoking methods from specifications to the page class, incorporating reusable methods, and managing your test data etc.
-
-Step 3: To execute Mocha test specs 
-- `npm run test:local`
-
-Step 4: To generate test report
-- `npm run allure:report`
 ---
 
 🤝 Contributions
 For extension, PRs and suggestions, feel free to fork or connect.
 
-📂 License
-MIT © 2025
-
+Happy testing! 🚀

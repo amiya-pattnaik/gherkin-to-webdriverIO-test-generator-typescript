@@ -1,11 +1,14 @@
 {
-  "name": "gherkin-to-webdriverIO-test-generator-typescript",
-  "version": "1.0.0",
+  "name": "wdio-testgen-from-gherkin-ts",
+  "version": "1.0.1",
   "description": "Automatically generate WebdriverIO Page Object classes and Mocha test specs from Gherkin",
   "author": "Amiya Pattanaik <pattnaik_amiya@yahoo.com>",
   "type": "module",
   "ts-node": {
     "esm": true
+  },
+  "bin": {
+    "testgen": "./testgen.ts"
   },
   "keywords": [
     "mocha",
@@ -13,17 +16,20 @@
     "automation",
     "ai-test-generator"
   ],
-   "repository": {
+  "repository": {
     "type": "git",
-    "url": "https://github.com/amiya-pattnaik/gherkin-to-webdriverIO-test-generator-typescript"
+    "url": "https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts"
   },
-  "homepage": "https://github.com/amiya-pattnaik/gherkin-to-webdriverIO-test-generator-typescript",
+  "homepage": "https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts",
   "scripts": {
-    "allure:report": "node_modules/.bin/allure generate --clean allure-results && allure open -p 5050",
-    "generate:stepmap": "tsx generateStepMap.ts",
-    "generate:tests": "tsx generateTestsFromMap.ts",
+    "allure:generate": "node_modules/.bin/allure generate --clean allure-results",
+    "allure:open": "allure open -p 5050",
+    "allure:report": "npm run allure:generate && npm run allure:open",
+    "testgen:steps": "tsx testgen.ts steps",
+    "testgen:tests": "tsx testgen.ts tests",
     "test:local": "npx wdio run ./wdio.conf.js",
-    "wdio": "wdio run ./wdio.conf.ts"
+    "wdio": "wdio run ./wdio.conf.ts",
+    "vitest": "vitest --config vitest.config.ts"
   },
   "devDependencies": {
     "@wdio/allure-reporter": "^9.12.6",
@@ -33,18 +39,21 @@
     "@wdio/mocha-framework": "^9.12.6",
     "@wdio/spec-reporter": "^9.12.6",
     "@wdio/visual-service": "^7.0.0",
+    "chokidar": "^4.0.3",
     "eslint": "^9.26.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
+    "vitest": "^3.1.4",
     "wdio-gmail-service": "^2.1.0"
   },
   "dependencies": {
     "@cucumber/gherkin": "^32.1.0",
     "allure-commandline": "^2.34.0",
+    "commander": "^14.0.0",
     "compromise": "^14.14.4",
     "fs": "^0.0.1-security",
-    "parth": "^4.2.3",
+    "parth": "^2.12.0",
     "save": "^2.9.0"
   }
 }

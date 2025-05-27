@@ -96,6 +96,8 @@ npm install -g tsx
 
 #### Now run from anywhere:
 ```bash
+testgen steps --all
+testgen tests --file login.stepMap.json
 testgen run --report        # ⬅️ Runs tests and generate allure report
 testgen run --report-only   # ⬅️ Generate report without rerunning testsbash
 ```

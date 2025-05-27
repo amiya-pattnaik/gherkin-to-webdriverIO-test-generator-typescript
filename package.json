@@ -27,6 +27,7 @@
     "allure:report": "npm run allure:generate && npm run allure:open",
     "testgen:steps": "tsx testgen.ts steps",
     "testgen:tests": "tsx testgen.ts tests",
+    "testgen:run": "tsx testgen.ts run",
     "test:local": "npx wdio run ./wdio.conf.js",
     "wdio": "wdio run ./wdio.conf.ts",
     "vitest": "vitest --config vitest.config.ts"

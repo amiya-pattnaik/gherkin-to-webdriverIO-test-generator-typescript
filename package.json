@@ -17,7 +17,7 @@
     }
   },
   "bin": {
-    "testgen": "./testgen.ts"
+    "testgen": "testgen.ts"
   },
   "files": [
     "testgen.ts",
@@ -34,13 +34,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts"
+    "url": "git+https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts.git"
   },
   "homepage": "https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts",
   "scripts": {
     "build": "tsc",
     "prepare": "npm run build",
-    "allure:generate": "node_modules/.bin/allure generate --clean allure-results",
+    "allure:generate": "allure generate --clean allure-results",
     "allure:open": "allure open -p 5050",
     "allure:report": "npm run allure:generate && npm run allure:open",
     "testgen:steps": "tsx testgen.ts steps",

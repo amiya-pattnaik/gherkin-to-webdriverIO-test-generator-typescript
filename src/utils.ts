@@ -7,23 +7,27 @@ export function generateShortName(text: string): string {
     return quoted
       .toLowerCase()
       .replace(/[^a-z0-9]/gi, ' ')
-      .replace(/\s+(.)/g, (_, c) => c.toUpperCase())
+      .replace(/\s+(.)/g, (_, c: string) => c.toUpperCase())
       .replace(/\s/g, '')
-      .replace(/^./, str => str.toLowerCase());
+      .replace(/^./, (str: string) => str.toLowerCase());
   }
+
   const doc = nlp(text);
-  const terms = doc
+  const terms = (doc as any)
     .not('should|be|is|are|the|and|a|to|i|for|have|has|with|of|in|on')
     .nouns()
     .out('array');
+
   const base = terms.slice(0, 3).join(' ') || text;
   return base
     .toLowerCase()
     .replace(/[^a-z0-9]/gi, ' ')
-    .replace(/\s+(.)/g, (_, c) => c.toUpperCase())
+    .replace(/\s+(.)/g, (_, c: string) => c.toUpperCase())
     .replace(/\s/g, '')
-    .replace(/^./, str => str.toLowerCase());
+    .replace(/^./, (str: string) => str.toLowerCase());
 }
+
+
 
 export function buildActionLine(selector: string, action: string, note: string): string | null {
   switch (action) {

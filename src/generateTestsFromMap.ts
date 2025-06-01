@@ -6,14 +6,23 @@ import path from 'path';
 import chokidar from 'chokidar';
 import { generateShortName, buildActionLine } from './utils';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
-const stepMapDir = path.join(__dirname, '..', 'stepMaps');
-const testDir = path.join(__dirname, '..', 'test');
+// const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const stepMapDir = path.join(process.cwd(), 'stepMaps'); // Fix here
+const testDir = path.join(process.cwd(), 'test');
 const pageObjectDir = path.join(testDir, 'pageobjects');
 const specDir = path.join(testDir, 'specs');
 const basePagePath = path.join(pageObjectDir, 'page.ts');
 
+
+
 export function processTests(opts: any) {
+
+  if (!fs.existsSync(stepMapDir)) {
+    fs.mkdirSync(stepMapDir, { recursive: true });
+    console.warn(`⚠️ Created missing stepMaps directory: ${stepMapDir}`);
+    return; // Exit early since there will be no files yet
+  }
+
   if (!fs.existsSync(testDir)) fs.mkdirSync(testDir);
   if (!fs.existsSync(pageObjectDir)) fs.mkdirSync(pageObjectDir, { recursive: true });
   if (!fs.existsSync(specDir)) fs.mkdirSync(specDir, { recursive: true });
@@ -52,8 +61,8 @@ export default class Page {
     console.log('✅ Created base Page class with open() and trySelector()');
   }
 
-  const filesToGenerate = opts.all
-    ? fs.readdirSync(stepMapDir).filter(f => f.endsWith('.stepMap.json'))
+  const filesToGenerate: string[] = opts.all
+    ? fs.readdirSync(stepMapDir).filter((f: string) => f.endsWith('.stepMap.json'))
     : opts.file;
 
   if (!filesToGenerate || filesToGenerate.length === 0) {
@@ -70,14 +79,14 @@ export default class Page {
 
     const baseName = path.basename(file, '.stepMap.json');
     const pageClassName = `${baseName.charAt(0).toUpperCase()}${baseName.slice(1)}Page`;
-    const stepMap = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+    const stepMap: Record<string, any[]> = JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
     const defaultPath = baseName.toLowerCase();
 
     if (opts.verbose) console.log(`🔍 Generating files for: ${file}`);
 
     const usedSelectors = new Map();
     const scenarioMethods: string[] = [];
-    for (const steps of Object.values(stepMap)) {
+    for (const steps of Object.values(stepMap) as any[]) {
       for (const step of steps) {
         const methodName = generateShortName(step.selectorName);
         if (!usedSelectors.has(methodName)) {
@@ -94,7 +103,7 @@ export default class Page {
     pageLines.push(`import Page from './page';`);
     pageLines.push(`class ${pageClassName} extends Page {`);
     for (const { methodName, selector, fallback } of usedSelectors.values()) {
-      const fallbackArray = fallback ? fallback.split(',').map(sel => `'${sel.trim()}'`).join(', ') : '';
+      const fallbackArray = fallback ? fallback.split(',').map((sel: string) => `'${sel.trim()}'`).join(', ') : '';
       pageLines.push(`  get ${methodName}() {`);
       pageLines.push(`    return this.trySelector('${selector}', [${fallbackArray}]);`);
       pageLines.push('  }');
@@ -103,7 +112,7 @@ export default class Page {
       const scenarioMethodName = generateShortName(scenarioName);
       scenarioMethods.push(scenarioMethodName);
       pageLines.push(`  async ${scenarioMethodName}() {`);
-      for (const step of steps) {
+      for (const step of steps as any[]) {
         const methodName = generateShortName(step.selectorName);
         const actionLine = buildActionLine(`this.${methodName}`, step.action, step.note);
         if (actionLine) pageLines.push(`    ${actionLine}`);
@@ -117,7 +126,13 @@ export default class Page {
     pageLines.push(`export default new ${pageClassName}();`);
 
     const pagePath = path.join(pageObjectDir, `${baseName}.page.ts`);
-    if (opts.dryRun) {
+    const testPath = path.join(specDir, `${baseName}.spec.ts`);
+    const skipPage = !opts.force && fs.existsSync(pagePath);
+    const skipSpec = !opts.force && fs.existsSync(testPath);
+
+    if (skipPage) {
+      console.warn(`⚠️ Skipping ${baseName}.page.ts (already exists)`);
+    } else if (opts.dryRun) {
       console.log(`[dry-run] Would write: ${pagePath}`);
     } else {
       fs.writeFileSync(pagePath, pageLines.join('\n'), 'utf-8');
@@ -131,7 +146,7 @@ export default class Page {
       const scenarioMethodName = generateShortName(scenarioName);
       testLines.push(`  it('${scenarioMethodName}', async () => {`);
       testLines.push(`    await ${pageClassName}.open();`);
-      for (const step of steps) {
+      for (const step of steps as any[]) {
         const methodName = generateShortName(step.selectorName);
         const actionLine = buildActionLine(`${pageClassName}.${methodName}`, step.action, step.note);
         if (actionLine) testLines.push(`    ${actionLine}`);
@@ -142,19 +157,17 @@ export default class Page {
     }
     testLines.push('});');
 
-    const testPath = path.join(specDir, `${baseName}.spec.ts`);
-    if (opts.dryRun) {
+    if (skipSpec) {
+      console.warn(`⚠️ Skipping ${baseName}.spec.ts (already exists)`);
+    } else if (opts.dryRun) {
       console.log(`[dry-run] Would write: ${testPath}`);
     } else {
       fs.writeFileSync(testPath, testLines.join('\n'), 'utf-8');
     }
 
-    //console.log(`✅ Generated: ${baseName}.page.ts + ${baseName}.spec.ts`);
-    if (opts.dryRun) {
-      console.log(`🧪 Dry-run completed: ${baseName}.page.ts + ${baseName}.spec.ts`);
-      } else {
-        console.log(`✅ Generated: ${baseName}.page.ts + ${baseName}.spec.ts`);
-      }
+    if (!skipPage && !skipSpec && !opts.dryRun) {
+      console.log(`✅ Generated: ${baseName}.page.ts + ${baseName}.spec.ts`);
+    }
   }
 
   if (opts.watch) {

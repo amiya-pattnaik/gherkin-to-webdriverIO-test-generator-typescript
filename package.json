@@ -7,9 +7,25 @@
   "ts-node": {
     "esm": true
   },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "bin": {
     "testgen": "./testgen.ts"
   },
+  "files": [
+    "testgen.ts",
+    "src/",
+    "dist",
+    "bin",
+    "README.md"
+  ],
   "keywords": [
     "mocha",
     "webdriverio",
@@ -22,6 +38,8 @@
   },
   "homepage": "https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts",
   "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
     "allure:generate": "node_modules/.bin/allure generate --clean allure-results",
     "allure:open": "allure open -p 5050",
     "allure:report": "npm run allure:generate && npm run allure:open",
@@ -40,17 +58,16 @@
     "@wdio/mocha-framework": "^9.12.6",
     "@wdio/spec-reporter": "^9.12.6",
     "@wdio/visual-service": "^7.0.0",
-    "chokidar": "^4.0.3",
     "eslint": "^9.26.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
-    "vitest": "^3.1.4",
-    "wdio-gmail-service": "^2.1.0"
+    "vitest": "^3.1.4"
   },
   "dependencies": {
     "@cucumber/gherkin": "^32.1.0",
     "allure-commandline": "^2.34.0",
+    "chokidar": "^4.0.3",
     "commander": "^14.0.0",
     "compromise": "^14.14.4",
     "fs": "^0.0.1-security",

@@ -1,20 +1,23 @@
 // src/steps.ts
-// Feature-to-stepMap JSON genaration logic
+// Updated for NPM packaging compatibility
 
 import fs from 'fs';
 import path from 'path';
 import chokidar from 'chokidar';
 import { Parser, AstBuilder, GherkinClassicTokenMatcher } from '@cucumber/gherkin';
 import { IdGenerator } from '@cucumber/messages';
+// import { fileURLToPath } from 'url';
 import { generateShortName } from './utils';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
-const featureDir = path.join(__dirname, '..', 'features');
-const stepMapDir = path.join(__dirname, '..', 'stepMaps');
+// const __filename = fileURLToPath(import.meta.url);
+// Removed unused __dirname
+
+const featureDir = path.join(process.cwd(), 'features');
+const stepMapDir = path.join(process.cwd(), 'stepMaps');
 
 const selectorFallbacks: Record<string, string> = {
   userNameField: '#username, input[name="username"]',
-  passwordField: '#password, input[type="password"]',
+  passwordField: '#password, input[name="password"]',
   loginButton: '#login, button[type="submit"]',
   countryDropdown: '#country, select[name="country"]',
   termsCheckbox: '#terms, input[type="checkbox"]',
@@ -27,10 +30,27 @@ const selectorFallbacks: Record<string, string> = {
 
 const parser = new Parser(new AstBuilder(IdGenerator.uuid()), new GherkinClassicTokenMatcher());
 
-export function processSteps(opts: any) {
-  if (!fs.existsSync(stepMapDir)) fs.mkdirSync(stepMapDir);
+interface StepMapEntry {
+  action: string;
+  selectorName: string;
+  selector: string;
+  fallbackSelector: string;
+  note: string;
+}
 
-  const aliasPath = path.join(__dirname, '..', 'selector-aliases.json');
+interface Options {
+  all?: boolean;
+  file?: string[];
+  dryRun?: boolean;
+  force?: boolean;
+  watch?: boolean;
+  verbose?: boolean;
+}
+
+export function processSteps(opts: Options) {
+  if (!fs.existsSync(stepMapDir)) fs.mkdirSync(stepMapDir, { recursive: true });
+
+  const aliasPath = path.join(process.cwd(), 'selector-aliases.json');
   const selectorAliases: Record<string, string> = fs.existsSync(aliasPath)
     ? JSON.parse(fs.readFileSync(aliasPath, 'utf-8'))
     : {};
@@ -46,13 +66,13 @@ export function processSteps(opts: any) {
       { regex: /title/i, name: 'pageTitle' },
       { regex: /url/i, name: 'currentUrl' },
       { regex: /welcome message/i, name: 'welcomeBanner' },
-      { regex: /profile picture/i, name: 'avatar' },
+      { regex: /profile picture/i, name: 'avatar' }
     ];
     const found = patterns.find(p => p.regex.test(stepText));
     return found ? found.name : generateShortName(stepText);
   }
 
-  function inferActionAndSelector(stepText: string) {
+  function inferActionAndSelector(stepText: string): StepMapEntry {
     const text = stepText.toLowerCase();
     const selectorName = toLogicalSelectorName(stepText);
     let action = 'unknown';
@@ -108,7 +128,7 @@ export function processSteps(opts: any) {
     if (!feature) return;
 
     const featureName = path.basename(featurePath, '.feature');
-    const stepMap: Record<string, any[]> = {};
+    const stepMap: Record<string, StepMapEntry[]> = {};
 
     for (const child of feature.children || []) {
       if (!child.scenario) continue;
@@ -129,8 +149,6 @@ export function processSteps(opts: any) {
       console.warn(`⚠️ Skipping ${featureName} (already exists)`);
     } else {
       fs.writeFileSync(outPath, JSON.stringify(stepMap, null, 2), 'utf-8');
-      
-      // console.log(`✅ Generated step map: ${featureName}.stepMap.json`);
       if (opts.dryRun) {
         console.log(`🧪 Dry-run completed: ${featureName}.stepMap.json`);
       } else {
@@ -139,13 +157,13 @@ export function processSteps(opts: any) {
     }
   }
 
-  const files = opts.all ? fs.readdirSync(featureDir).filter(f => f.endsWith('.feature')) : opts.file;
-  if (!files || files.length === 0) {
+  const files = opts.all ? fs.readdirSync(featureDir).filter(f => f.endsWith('.feature')) : opts.file || [];
+  if (!files.length) {
     console.error('❌ Please provide --all or --file <file>');
     process.exit(1);
   }
 
-  files.forEach(file => {
+  files.forEach((file: string) => {
     const fullPath = path.join(featureDir, file);
     if (!fs.existsSync(fullPath)) {
       console.warn(`⚠️ File not found: ${file}`);

@@ -1,7 +1,8 @@
-Feature: This is my login functionality for testing
-  Scenario: This is my successful login
+Feature: Login
+
+  Scenario: Valid user logs in successfully
     Given I open the login page
-    When I enter username in the username field
-    When I enter password in the password field
-    And I click on the login button
-    Then I should see "Welcome Tom!" in the welcome message
+    When I enter "testuser" into the username field
+    And I enter "password123" into the password field
+    And I click the login button
+    Then I should see the dashboard with message "Welcome back, TestUser!"

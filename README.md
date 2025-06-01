@@ -8,7 +8,7 @@
 
 > CLI tool to generate WebdriverIO Page Objects, utilize AI/NLP for Selector Name, Method Name Inference, and generate Mocha Specs from Gherkin `.feature` files.
 
-> 🚀. It works in two main steps:
+> 🚀. What It Does:
 
 1. Generate Step Maps: Parses Gherkin feature files to produce structured .stepMap.json files which contains - `action`, `selectorName`, `selector`, `fallbackSelector`, `note`.
 
@@ -20,7 +20,7 @@
 
 ## 📦 Installation
 
-Clone the repo and install dependencies:
+### Option 1: Clone for local development
 
 ```bash
 git clone https://github.com/amiya-pattnaik/wdio-testgen-from-gherkin-ts.git
@@ -30,9 +30,10 @@ cd wdio-testgen-from-gherkin-ts
 npm install
 ```
 
-> ✅ If using globally, also install `tsx`:
+### Option 2: Install from NPM
+
 ```bash
-npm install -g tsx
+npm i wdio-testgen-from-gherkin-ts -D 
 ```
 
 ---
@@ -60,30 +61,16 @@ project-root/
 ├── package.json                # Scripts and dependencies
 ├── selector-aliases.json       # Optional user-defined selector overrides the primary selector
 
+Note: Above directory structure when using Option 1: Clone for local development
 ```
 
 ---
 
 ## 🚀 CLI Usage
 
-### Option A: Run with npm scripts (easy local use)
+Ensure you have a `features/` folder in your root directory with Gherkin `.feature` files.
 
-```bash
-# Step 1: Generate stepMap.json from the .feature files
-npm run testgen:steps -- --all                 
-npm run testgen:steps -- --file login.feature
-
-# Step 2: Generate Page Objects and Mocha Specs from stepMap.json
-npm run testgen:tests -- --all
-npm run testgen:tests -- --file login.stepMap.json
-
-# Step 3: Execute tests and generate Allure reoprt
-npm run testgen:run -- --report
-```
-
-### Option B: Use as a global CLI command
-
-#### One-time setup:
+### One-time setup:
 ```bash
 chmod +x testgen.ts
 npm link     # If fails, try: sudo npm link
@@ -94,22 +81,72 @@ npm link     # If fails, try: sudo npm link
 npm install -g tsx
 ```
 
-#### Now run from anywhere:
+### Now run from anywhere:
 ```bash
 testgen steps --all
 testgen tests --file login.stepMap.json
 testgen run --report        # ⬅️ Runs tests and generate allure report
-testgen run --report-only   # ⬅️ Generate report without rerunning testsbash
+testgen run --report-only   # ⬅️ Generate report without rerunning tests
 ```
-> 💡 **Note for Allure users:** To avoid errors when opening the report viewer, split the `allure:report` script like this in your package.json:
->
-> ```json
-> "scripts": {
->   "allure:generate": "node_modules/.bin/allure generate --clean allure-results",
->   "allure:open": "allure open -p 5050",
->   "allure:report": "npm run allure:generate && npm run allure:open"
-> }
-> ```
+
+### Generate step maps from `.feature` files
+```bash
+testgen steps --all
+```
+This creates a `stepMaps/` folder with corresponding `.stepMap.json` files.
+
+### Generate Page Object classes and Mocha specs
+```bash
+testgen tests --all
+```
+This generates a `test/` folder with:
+- `test/pageobjects/*.page.ts`
+- `test/specs/*.spec.ts`
+
+> ✅ Skipping logic is built in — to overwrite existing files, use `--force`.
+
+### Watch mode
+```bash
+testgen steps --all --watch
+```
+Watches for `.feature` file changes.
+
+## 🧑‍💻 Programmatic Usage
+You can also use this in a `.ts` file:
+
+```ts
+import { processSteps, processTests } from 'wdio-testgen-from-gherkin-ts';
+
+processSteps({ all: true, force: true, verbose: true });
+processTests({ all: true, force: true, verbose: true });
+```
+Run it with:
+```bash
+npx tsx mytest.ts
+```
+
+### Available Options
+Both `processSteps()` and `processTests()` accept:
+- `all: true` – generate for all files
+- `file: ['filename']` – generate for specific file
+- `force: true` – overwrite if file exists
+- `dryRun: true` – preview output only
+- `watch: true` – auto-regenerate on file changes
+- `verbose: true` – detailed logs
+
+## 🗂 Folder Structure Assumption
+Your root folder should contain:
+```
+features/              # Gherkin feature files
+stepMaps/              # Will be generated
+selector-aliases.json  # Optional
+```
+The generated output goes to:
+```
+test/
+  ├─ pageobjects/
+  └─ specs/
+```
 
 ---
 
@@ -393,6 +430,7 @@ Supports a wide range of actions: `setValue`, `click`, `selectDropdown`, `upload
 ---
 
 🤝 Contributions
+
 For extension, PRs and suggestions, feel free to fork or connect.
 
 Happy testing! 🚀

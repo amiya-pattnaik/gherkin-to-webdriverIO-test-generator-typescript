@@ -3,10 +3,15 @@
         "moduleResolution": "node",
         "module": "ESNext",
         "target": "es2022",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitAny": false,
+        "skipLibCheck": true,
+        "declaration": true,
         "lib": [
-            "es2022",
-            "dom"
-        ],
+            "es2022", "dom"],
         "types": [
             "node",
             "@wdio/globals/types",
@@ -15,9 +20,7 @@
             "@wdio/visual-service",
             "wdio-gmail-service"
         ],
-        "skipLibCheck": true,
-        "noEmit": true,
-        "allowImportingTsExtensions": true,
+        "noEmit": false,
         "resolveJsonModule": true,
         "isolatedModules": true,
         "strict": true,
@@ -25,9 +28,6 @@
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true
     },
-   "include": [
-  "test",
-  "wdio.conf.ts",
-  "testgen.ts"
-]
+    "include": ["src/**/*", "testgen.ts"],
+    "exclude": ["test", "testgen.ts", "wdio.conf.ts"]
 }
